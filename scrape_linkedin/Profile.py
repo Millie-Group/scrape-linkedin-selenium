@@ -1,5 +1,5 @@
-from .utils import *
-from .ResultsObject import ResultsObject
+from utils import *
+from ResultsObject import ResultsObject
 import re
 
 

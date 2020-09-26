@@ -1,4 +1,4 @@
-from .Scraper import Scraper
+from Scraper import Scraper
 import json
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,7 +7,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import re
 
 import time
-from .utils import *
+from utils import *
 
 
 class ConnectionScraper(Scraper):

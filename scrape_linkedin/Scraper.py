@@ -123,8 +123,8 @@ class Scraper(object):
         return self
 
     def __exit__(self, *args, **kwargs):
-        self.quit()
-
-    def quit(self):
-        if self.driver and not self.was_passed_instance:
-            self.driver.quit()
+        print("done")
+    #
+    # def quit(self):
+    #     if self.driver and not self.was_passed_instance:
+    #         self.driver.quit()
