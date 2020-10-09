@@ -35,6 +35,7 @@ def scrape_profile(url, cookie):
 
     #print("Headline: ", headline)
 
+    # TODO: add support for past locations
     location = data['personal_info']['location']
 
     #print("Location: ", location)
