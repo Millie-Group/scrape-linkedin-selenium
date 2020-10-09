@@ -150,3 +150,5 @@ cython_debug/
 
 .idea
 .DS_Store
+
+cookies.py
