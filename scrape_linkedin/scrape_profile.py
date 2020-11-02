@@ -1,109 +1,127 @@
 from ProfileScraper import ProfileScraper
 from selenium.webdriver import Chrome
+from utils import HEADLESS_OPTIONS
 
 
-# TODO: Look into using headless instead of Chrome
-def scrape(url, cookie):
-    driver_options = {}
-    driver_type = Chrome
+def extract_name(data):
+    """
+    Extracts the full name, first name, and last name from a LinkedIn user's profile
 
-    scraper = ProfileScraper(driver=driver_type, cookie=cookie, driver_options = driver_options)
-    profile = scraper.scrape(url=url)
+    Parameters
+    ----------
+    data: the dictionary representation of a LinkedIn user's profile
 
-    output = profile.to_dict()
+    Returns
+    -------
+    The user's full name, first name, and last name
+    """
 
-    return output
+    full_name = data['personal_info']['name']
+    if ' ' in full_name:
+        first_name = full_name[:full_name.index(' ')]
+        last_name = full_name[full_name.rindex(' ') + 1:]
+    else:
+        first_name = ''
+        last_name = ''
+
+    return full_name, first_name, last_name
 
 
-# TODO: comment code and separate into methods
-def scrape_profile(url, cookie):
-    # TODO: remove once Ritvik sends school list
-    international = ["International Baccalaureate", "IBDP", "IB", "IB Score", "A Level",
-                     "A-Level", "French Baccalaureate", "AP", "Advanced Placement", "A Levels", "A*"]
+def extract_undergrad(school, undergrad):
+    """
+    Extracts information about a LinkedIn user's undergraduate school
 
-    data = scrape(url, cookie)
+    Parameters
+    ----------
+    school: the undergraduate school
+    undergrad: a list of other undergraduate schools
 
-    fullName = data['personal_info']['name']
-    firstName = fullName[:fullName.index(' ')]
-    lastName = fullName[fullName.rindex(' ')+1:]
+    Returns
+    -------
+    The updated list of undergraduate schools and the undergraduate year of graduation
+    """
 
-    #print("Full Name: ", fullName)
-    #print("First Name: ", firstName)
-    #print("Last Name: ", lastName)
+    undergrad.append(school['name'])
+    date_range = school['date_range']
 
-    headline = data['personal_info']['headline']
+    if date_range is None:
+        undergrad_yr = 'N/A'
+    elif 'Present' not in date_range:
+        undergrad_yr = int(date_range[-4:])
+    elif date_range[0:4].isnumeric():
+        undergrad_yr = int(date_range[0:4]) + 4
+    else:
+        undergrad_yr = int(date_range[4:8])
 
-    #print("Headline: ", headline)
+    return undergrad, undergrad_yr
 
-    # TODO: add support for past locations
-    location = data['personal_info']['location']
 
-    #print("Location: ", location)
+def check_int(school, international):
+    """
+    Checks if a school is an international school based on a school list and other criteria
 
-    university = []
-    undergrad = []
-    grad_yrs = []
-    undergrad_yr = 0
-    yrs_experience = 0
-    int_hs = 'N'
+    Parameters
+    ----------
+    school: current school being checked
+    international: AP/IB school list
 
-    keepSchool = ''
+    Returns
+    -------
+    Y or N
+    """
 
-    for school in data['experiences']['education']:
-        schoolName = school['name']
-        degreeName = school['degree']
+    # list of criteria that could qualify a school as an international school even if it is not on the school lists
+    int_criteria = ["International Baccalaureate", "IBDP", "IB", "IB Score", "A Level",
+                    "A-Level", "French Baccalaureate", "A Levels", "A*"]
 
-        if 'College' in schoolName or 'University' in schoolName:
-            keepSchool = schoolName
+    school_name = school['name']
 
-        if degreeName is not None and (degreeName[0] is 'B' or 'Bachelor' in degreeName):
-            undergrad.append(schoolName)
-            date_range = school['date_range']
+    degree_name = school['degree']
+    if degree_name is None: degree_name = ''
 
-            if date_range is None:
-                undergrad_yr = 'N/A'
-            elif 'Present' not in date_range:
-                undergrad_yr = int(date_range[-4:])
-                grad_yrs.append(int(undergrad_yr))
-            elif date_range[0:4].isnumeric():
-                undergrad_yr = int(date_range[0:4]) + 4
-                grad_yrs.append(int(undergrad_yr))
-            else:
-                undergrad_yr = int(date_range[4:8])
-                grad_yrs.append(int(undergrad_yr))
+    field_of_study = school['field_of_study']
+    if field_of_study is None: field_of_study = ''
 
-        else:
-            university.append(schoolName)
+    grades = school['grades']
+    if grades is None: grades = ''
 
-            date_range = school['date_range']
-            yr = 0
+    if any(element.lower() == school_name.lower() for element in international["AP"]):
+        int_hs = 'Y (AP)'
+    elif any(element.lower() == school_name.lower() for element in international["IB"]):
+        int_hs = 'Y (IB)'
+    elif any(element.lower() in school_name.lower() for element in int_criteria) or \
+            any(element.lower() in degree_name.lower() for element in int_criteria) or \
+            any(element.lower() in field_of_study.lower() for element in int_criteria) or \
+            any(element.lower() in grades.lower() for element in int_criteria):
+        int_hs = 'Y'
+    else:
+        int_hs = 'N'
 
-            if date_range is None:
-                yr = 'N/A'
-            elif 'Present' not in date_range:
-                yr = int(date_range[-4:])
-                grad_yrs.append(yr)
-            elif date_range[0:4].isnumeric():
-                yr = int(date_range[0:4]) + 4
-                grad_yrs.append(int(yr))
-            else:
-                yr = int(date_range[4:8])
-                grad_yrs.append(int(yr))
+    return int_hs
 
-        if degreeName is None:
-            degreeName = ''
-        if any(element.lower() in degreeName.lower() for element in international) or any(element.lower() in schoolName.lower() for element in international):
-            filtered = list(filter(lambda a: a is not None, school.values()))
-            if any(element in ' '.join(filtered) for element in international):
-                int_hs = 'Y'
 
-    if undergrad_yr == 'N/A':
-        undergrad_yr = 0
+def extract_work(data):
+    """
+    Extracts information about each of the LinkedIn user's past work experiences
+
+    Parameters
+    ----------
+    data: the dictionary representation of a LinkedIn user's profile
+
+    Returns
+    -------
+    The year of the user's first work experience and all past working locations
+    """
 
     first_work = 2021
+    locs = []
 
     for experience in data['experiences']['jobs']:
         date_range = experience['date_range']
+        location = experience['location']
+
+        if location not in locs:
+            locs.append(location)
 
         if date_range is None:
             date = 'N/A'
@@ -118,6 +136,96 @@ def scrape_profile(url, cookie):
             if date < first_work:
                 first_work = date
 
+    return first_work, locs
+
+
+def scrape(url, cookie, headless=True):
+    """
+    Scrapes a profile using the account for which a cookie is given
+
+    Parameters
+    ----------
+    url: URL of the LinkedIn profile to be scraped
+    cookie: 'li_at' cookie for the user account scraping the profile
+    headless: whether or not a headless driver should be used (defaults to True)
+
+    Returns
+    -------
+    Dictionary representation of a profile's JSON
+    """
+
+    # sets up a Selenium instance using Chrome
+    driver_options = HEADLESS_OPTIONS
+    if headless == False:
+        driver_options = {}
+    driver_type = Chrome
+
+    # initializes a scraper object based on the cookie to scrape the URL's profile
+    scraper = ProfileScraper(driver=driver_type, cookie=cookie, driver_options = driver_options)
+    profile = scraper.scrape(url=url)
+
+    # converts the profile output to a dictionary (rather than a JSON)
+    output = profile.to_dict()
+
+    # print(output)     # uncomment this line to visualize the dictionary output of a profile
+    return output
+
+
+def scrape_profile(url, cookie, international):
+    """
+    Extracts the specific information needed from the scraped output of a profile
+
+    Parameters
+    ----------
+    url: URL of the LinkedIn profile to be scraped
+    cookie: 'li_at' cookie for the user account scraping the profile
+    international: international school (AP/IB) lists --> this is passed as an argument to avoid reading
+        the lists in multiple times
+
+    Returns
+    -------
+    Information needed for the LinkedIn member (in order: full name, first name, last name, current location,
+        undergrad school(s), other school(s), years of experience since undergrad graduation, headline,
+        international high school?, email, undergrad year of graduation (if found)
+    """
+
+    data = scrape(url, cookie)                              # scrapes the profile located at URL
+
+    fullName, firstName, lastName = extract_name(data)      # finds the name of the LinkedIn user
+
+    headline = data['personal_info']['headline']            # finds the headline of the LinkedIn user
+
+    # TODO: add support for past locations
+    location = data['personal_info']['location']            # finds the current location of the LinkedIn user
+
+    email = data['personal_info']['email']                  # finds the email of the LinkedIn user (if included)
+
+    all_schools = []
+    undergrad = []
+    undergrad_yr = 0
+    int_hs = 'N'
+
+    for school in data['experiences']['education']:         # iterate over each of the user's schools
+        degree_name = school['degree']                      # find degree name
+        if degree_name is None: degree_name = ''
+
+        # undergrad school
+        if degree_name is not '' and (degree_name[0] is 'B' or 'Bachelor' in degree_name):
+            undergrad, undergrad_yr = extract_undergrad(school, undergrad)
+
+        # other schools
+        else:
+            all_schools.append(school['name'])
+
+        if int_hs == 'N':                                   # check for international high school
+            int_hs = check_int(school, international)
+
+    if undergrad_yr == 'N/A':                               # set undergrad year to 0 if it has not been found
+        undergrad_yr = 0
+
+    first_work, locs = extract_work(data)                   # find work information
+
+    # set years of experience (either based on undergrad year or first work experience)
     if undergrad_yr == 0 and first_work < 2021:
         yrs_experience = max(0, 2020 - int(first_work))
     else:
@@ -125,18 +233,9 @@ def scrape_profile(url, cookie):
     if yrs_experience == 2020:
         yrs_experience = 0
 
-    if len(undergrad) == 0:
-        undergrad.append(keepSchool)
-
     undergrad = ', '.join(undergrad)
-    #print("Undergrad: ", undergrad)
+    all_schools = ', '.join(all_schools)
+    locs = ', '.join(locs)
 
-    university = ', '.join(university)
-    #print("Other Schools: ", university)
-
-    email = data['personal_info']['email']
-    #print("Email: ", data['personal_info']['email'])
-
-    #print("International HS? ", int_hs)
-
-    return fullName, firstName, lastName, location, undergrad, university, yrs_experience, headline, int_hs, email, undergrad_yr
+    return fullName, firstName, lastName, location, locs, undergrad, all_schools, \
+           yrs_experience, headline, int_hs, email, undergrad_yr

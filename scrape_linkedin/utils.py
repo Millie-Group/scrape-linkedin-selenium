@@ -179,7 +179,8 @@ def get_school_info(school):
         'grades': '.pv-entity__grade span:nth-of-type(2)',
         'field_of_study': '.pv-entity__fos span:nth-of-type(2)',
         'date_range': '.pv-entity__dates span:nth-of-type(2)',
-        'activities': '.activities-societies'
+        'activities': '.activities-societies',
+        #'description': '.pv-entity__description',
     })
 
 
