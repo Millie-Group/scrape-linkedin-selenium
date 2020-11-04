@@ -35,7 +35,7 @@ def main():
     # else:
     #     sys.exit("Didn't enter a valid LinkedIn account! Must choose Jenna, Giuseppe, or Bot.")
 
-    name = input("Cookie?\t")
+    cookie = input("Cookie?\t")
 
     # input name of spreadsheet (get profile links from this sheet and eventually return information to the same sheet)
     filename = input("Name of spreadsheet? (e.g. medicine.csv)\t")
@@ -126,6 +126,7 @@ def main():
                 url = url[:url.rindex('?')]
             elif url[-1] is not '/':
                 url = url[:url.rindex('-')]
+            print(url)
             scraped_data = scrape_profile(url, cookie, int_schools)
 
             df.loc[index, 'LinkedIn URL'] = url

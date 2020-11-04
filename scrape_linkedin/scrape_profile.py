@@ -120,7 +120,7 @@ def extract_work(data):
         date_range = experience['date_range']
         location = experience['location']
 
-        if location not in locs:
+        if location not in locs and location is not None:
             locs.append(location)
 
         if date_range is None:
@@ -233,9 +233,9 @@ def scrape_profile(url, cookie, international):
     if yrs_experience == 2020:
         yrs_experience = 0
 
-    undergrad = ', '.join(undergrad)
-    all_schools = ', '.join(all_schools)
-    locs = ', '.join(locs)
+    undergrad = '; '.join(undergrad)
+    all_schools = '; '.join(all_schools)
+    locs = '; '.join(locs)
 
     return fullName, firstName, lastName, location, locs, undergrad, all_schools, \
            yrs_experience, headline, int_hs, email, undergrad_yr
