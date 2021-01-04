@@ -22,7 +22,7 @@ class Scraper(object):
         - timeout {float}: time to wait for page to load first batch of async content
     """
 
-    def __init__(self, cookie=None, scraperInstance=None, driver=selenium.webdriver.Chrome, driver_options={}, scroll_pause=0.1, scroll_increment=300, timeout=10):
+    def __init__(self, email=None, password=None, cookie=None, scraperInstance=None, driver=selenium.webdriver.Chrome, driver_options={}, scroll_pause=0.1, scroll_increment=300, timeout=10):
         if type(self) is Scraper:
             raise Exception(
                 'Scraper is an abstract class and cannot be instantiated directly')
@@ -43,8 +43,8 @@ class Scraper(object):
         self.driver.get('http://www.linkedin.com')
         self.driver.set_window_size(1920, 1080)
 
-        if 'LI_EMAIL' in environ and 'LI_PASS' in environ:
-            self.login(environ['LI_EMAIL'], environ['LI_PASS'])
+        if email is not None and password is not None:
+            self.login(email, password)
         else:
             if not cookie and 'LI_AT' not in environ:
                 raise ValueError(
@@ -62,10 +62,11 @@ class Scraper(object):
         raise Exception('Must override abstract method scrape')
 
     def login(self, email, password):
-        email_input = self.driver.find_element_by_css_selector(
-            'input.login-email')
-        password_input = self.driver.find_element_by_css_selector(
-            'input.login-password')
+        self.driver.get("https://www.linkedin.com/")
+        email_input = self.driver.find_element_by_id(
+            'session_key')
+        password_input = self.driver.find_element_by_id(
+            'session_password')
         email_input.send_keys(email)
         password_input.send_keys(password)
         password_input.send_keys(Keys.ENTER)

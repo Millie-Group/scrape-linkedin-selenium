@@ -78,12 +78,17 @@ scrape the connections of someone you aren't connected to.""")
             return []
         all_conns = []
 
-    def next_page(self):
-        next_btn = self.driver.find_element_by_css_selector('button.next')
+    def next_page(self, jenna=False):
+        next_btn = self.driver.find_element_by_css_selector('[aria-label="Next"]')
         next_btn.click()
-        self.wait(EC.text_to_be_present_in_element(
-            (By.CSS_SELECTOR, '.results-paginator li.page-list li.active'), str(self.page_num + 1)
-        ))
+        if jenna:
+            self.wait(EC.text_to_be_present_in_element(
+                (By.CSS_SELECTOR, '.search-results-page'), str(self.page_num + 1)
+            ))
+        else:
+            self.wait(EC.text_to_be_present_in_element(
+                (By.CSS_SELECTOR, '.search-results-page'), str(self.page_num + 1)
+            ))
         self.page_num += 1
 
     def scrape_all_pages(self):
@@ -97,25 +102,42 @@ scrape the connections of someone you aren't connected to.""")
                 self.next_page()
         return all_results
 
-    def scrape_page(self):
-        print("SCRAPING PAGE: ", self.page_num)
+    def scrape_page(self, jenna=False):
+        print("\tSCRAPING PAGE: ", self.page_num)
         self.scroll_to_bottom()
         try:
-            next_btn = self.driver.find_element_by_css_selector('button.next')
+            next_btn = self.driver.find_element_by_css_selector('[aria-label="Next"]')
+            if not next_btn.is_enabled(): next_btn = None
         except NoSuchElementException:
             next_btn = None
-        connections = self.driver.find_elements_by_css_selector(
-            '.search-entity')
-        results = []
-        for conn in connections:
-            result = {}
-            result['name'] = conn.find_element_by_css_selector(
-                '.actor-name').text
-            link = conn.find_element_by_css_selector(
-                '.search-result__result-link').get_attribute('href')
-            user_id = re.search(r'/in/(.*?)/', link).group(1)
-            result['id'] = user_id
-            results.append(result)
+        if jenna:
+            connections = self.driver.find_elements_by_css_selector(
+                '.entity-result')
+            results = []
+            for conn in connections:
+                #result = {}
+                result = conn.find_element_by_css_selector(
+                    '.entity-result__title-text').text.partition('\n')[0]
+                #link = conn.find_element_by_css_selector(
+                #    '.app-aware-link').get_attribute('href')
+                #user_id = re.search(r'/in/(.*?)/', link).group(1)
+                #result['id'] = user_id
+                results.append(result)
+                #print(result)
+        else:
+            connections = self.driver.find_elements_by_css_selector(
+                '.entity-result__item')
+            results = []
+            for conn in connections:
+                #result = {}
+                result = conn.find_element_by_css_selector(
+                    '.entity-result__title-text').text.partition('\n')[0]
+                #link = conn.find_element_by_css_selector(
+                #    '.search-result__result-link').get_attribute('href')
+                #user_id = re.search(r'/in/(.*?)/', link).group(1)
+                #result['id'] = user_id
+                results.append(result)
+                # print(result)
         return bool(next_btn), results
 
     def configure_connection_type(self):

@@ -24,9 +24,14 @@ class ProfileScraper(Scraper):
             'https://www.linkedin.com/sales/gmail/profile/proxy/{}'.format(email))
         return self.get_profile()
 
-    def scrape(self, url='', user=None):
+    def scrape(self, url='', user=None, mutuals=False):
         self.load_profile_page(url, user)
-        return self.get_profile()
+        profile = self.get_profile()
+        if mutuals:
+            users, num_users = self.get_mutual_connections()
+            return profile, users, num_users
+        else:
+            return profile
 
     def load_profile_page(self, url='', user=None):
         """Load profile page and all async content
@@ -76,8 +81,8 @@ class ProfileScraper(Scraper):
         except:
             raise Exception(
                 "Could not find profile wrapper html. This sometimes happens for exceptionally long profiles.  Try decreasing scroll-increment.")
-        contact_info = self.get_contact_info()
-        return Profile(profile + contact_info)
+        #contact_info = self.get_contact_info()
+        return Profile(profile)
 
     def get_contact_info(self):
         try:
@@ -95,11 +100,16 @@ class ProfileScraper(Scraper):
     def get_mutual_connections(self):
         try:
             link = self.driver.find_element_by_partial_link_text(
-                'Mutual Connection')
+                'mutual')
         except NoSuchElementException as e:
             print("NO MUTUAL CONNS")
             return []
         with ConnectionScraper(scraperInstance=self) as cs:
             cs.driver.get(link.get_attribute('href'))
-            cs.wait_for_el('.search-s-facet--facetNetwork form button')
-            return cs.scrape_all_pages()
+            #cs.wait_for_el('.search-s-facet--facetNetwork form button')
+            users = cs.scrape_all_pages()
+            if type(users[0]) is dict:
+                names = [user['name'] for user in users]
+                return '; '.join(names), len(names)
+            return '; '.join(users), len(users)
+

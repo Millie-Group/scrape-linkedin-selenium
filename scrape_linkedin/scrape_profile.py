@@ -119,6 +119,7 @@ def extract_work(data):
     for experience in data['experiences']['jobs']:
         date_range = experience['date_range']
         location = experience['location']
+        company = experience['company'].lower()
 
         if location not in locs and location is not None:
             locs.append(location)
@@ -139,7 +140,22 @@ def extract_work(data):
     return first_work, locs
 
 
-def scrape(url, cookie, headless=True):
+def make_scraper(cookie=None, email=None, password=None, headless=True):
+    # sets up a Selenium instance using Chrome
+    driver_options = HEADLESS_OPTIONS
+    if headless == False:
+        driver_options = {}
+    driver_type = Chrome
+
+    # initializes a scraper object based on the cookie to scrape the URL's profile
+    if cookie is None:
+        scraper = ProfileScraper(driver=driver_type, email=email, password=password, driver_options=driver_options)
+    else:
+        scraper = ProfileScraper(driver=driver_type, cookie=cookie, driver_options=driver_options)
+    return scraper
+
+
+def scrape(url, scraper, mutuals=False):
     """
     Scrapes a profile using the account for which a cookie is given
 
@@ -154,24 +170,21 @@ def scrape(url, cookie, headless=True):
     Dictionary representation of a profile's JSON
     """
 
-    # sets up a Selenium instance using Chrome
-    driver_options = HEADLESS_OPTIONS
-    if headless == False:
-        driver_options = {}
-    driver_type = Chrome
+    if mutuals:
+        profile, mut_cons, num_muts = scraper.scrape(url=url, mutuals=mutuals)
+        output = profile.to_dict()
+        return output, mut_cons, num_muts
+    else:
+        profile = scraper.scrape(url=url)
 
-    # initializes a scraper object based on the cookie to scrape the URL's profile
-    scraper = ProfileScraper(driver=driver_type, cookie=cookie, driver_options = driver_options)
-    profile = scraper.scrape(url=url)
+        # converts the profile output to a dictionary (rather than a JSON)
+        output = profile.to_dict()
 
-    # converts the profile output to a dictionary (rather than a JSON)
-    output = profile.to_dict()
-
-    # print(output)     # uncomment this line to visualize the dictionary output of a profile
-    return output
+        # print(output)     # uncomment this line to visualize the dictionary output of a profile
+        return output
 
 
-def scrape_profile(url, cookie, international):
+def scrape_profile(url, scraper, international, mutuals=False):
     """
     Extracts the specific information needed from the scraped output of a profile
 
@@ -189,16 +202,18 @@ def scrape_profile(url, cookie, international):
         international high school?, email, undergrad year of graduation (if found)
     """
 
-    data = scrape(url, cookie)                              # scrapes the profile located at URL
+    if mutuals:
+        data, connections, num_mutuals = scrape(url, scraper, mutuals=mutuals)    # scrapes the profile located at URL
+    else:
+        data = scrape(url, scraper)
 
     fullName, firstName, lastName = extract_name(data)      # finds the name of the LinkedIn user
 
     headline = data['personal_info']['headline']            # finds the headline of the LinkedIn user
 
-    # TODO: add support for past locations
     location = data['personal_info']['location']            # finds the current location of the LinkedIn user
 
-    email = data['personal_info']['email']                  # finds the email of the LinkedIn user (if included)
+    #email = data['personal_info']['email']                  # finds the email of the LinkedIn user (if included)
 
     all_schools = []
     undergrad = []
@@ -223,7 +238,7 @@ def scrape_profile(url, cookie, international):
     if undergrad_yr == 'N/A':                               # set undergrad year to 0 if it has not been found
         undergrad_yr = 0
 
-    first_work, locs = extract_work(data)                   # find work information
+    first_work, locs, title, tba_date, duration, comp = extract_work(data)                   # find work information
 
     # set years of experience (either based on undergrad year or first work experience)
     if undergrad_yr == 0 and first_work < 2021:
@@ -238,4 +253,4 @@ def scrape_profile(url, cookie, international):
     locs = '; '.join(locs)
 
     return fullName, firstName, lastName, location, locs, undergrad, all_schools, \
-           yrs_experience, headline, int_hs, email, undergrad_yr
+           yrs_experience, headline, int_hs, connections, undergrad_yr, num_mutuals
