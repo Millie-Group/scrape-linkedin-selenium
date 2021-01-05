@@ -238,7 +238,7 @@ def scrape_profile(url, scraper, international, mutuals=False):
     if undergrad_yr == 'N/A':                               # set undergrad year to 0 if it has not been found
         undergrad_yr = 0
 
-    first_work, locs, title, tba_date, duration, comp = extract_work(data)                   # find work information
+    first_work, locs = extract_work(data)                   # find work information
 
     # set years of experience (either based on undergrad year or first work experience)
     if undergrad_yr == 0 and first_work < 2021:
@@ -252,5 +252,9 @@ def scrape_profile(url, scraper, international, mutuals=False):
     all_schools = '; '.join(all_schools)
     locs = '; '.join(locs)
 
-    return fullName, firstName, lastName, location, locs, undergrad, all_schools, \
-           yrs_experience, headline, int_hs, connections, undergrad_yr, num_mutuals
+    if mutuals:
+        return fullName, firstName, lastName, location, locs, undergrad, all_schools, \
+               yrs_experience, headline, int_hs, undergrad_yr, connections, num_mutuals
+    else:
+        return fullName, firstName, lastName, location, locs, undergrad, all_schools, \
+           yrs_experience, headline, int_hs, undergrad_yr

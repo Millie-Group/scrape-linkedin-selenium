@@ -25,7 +25,7 @@ def school_list(schools, country):
 
 def main():
     # choose LinkedIn account
-    # name = input("Whose LinkedIn account should be used (Jenna, Guiseppe, or Bot)?\t")
+    # name = input("Whose LinkedIn account should be used (Jenna, Giuseppe, or Bot)?\t")
     # name = name.lower()
     #
     # if name in cookies:
@@ -35,13 +35,15 @@ def main():
     # else:
     #     sys.exit("Didn't enter a valid LinkedIn account! Must choose Jenna, Giuseppe, or Bot.")
 
-    cookie = input("Cookie?\t")
+    cookie = input("Cookie? (-1 to use email/password)\t")
     if cookie == '-1':
         email = input("Email?\t")
         password = input("Password?\t")
 
     # input name of spreadsheet (get profile links from this sheet and eventually return information to the same sheet)
     filename = input("Name of spreadsheet? (e.g. medicine.csv)\t")
+
+    mutuals = input("Mutuals? (1 for yes, 0 for no)\t")
 
     # # choose undergrad options
     # undergrads = []
@@ -125,6 +127,12 @@ def main():
     else:
         scraper = make_scraper(cookie=cookie)
 
+    if mutuals == "1":
+        mutuals = True
+        df['Mutuals'] = ''
+        df['Num Mutuals'] = 0
+    else: mutuals = False
+
     # scrape profiles
     for index, row in df.iterrows():
         url = row['LinkedIn URL']
@@ -135,7 +143,7 @@ def main():
             #elif url[-1] is not '/':
             #    url = url[:url.rindex('-')]
             print(url, str(index))
-            scraped_data = scrape_profile(url, scraper, int_schools, mutuals=False)
+            scraped_data = scrape_profile(url, scraper, int_schools, mutuals=mutuals)
             print(scraped_data)
 
             df.loc[index, 'Full Name'] = scraped_data[0]
@@ -148,9 +156,11 @@ def main():
             df.loc[index, 'Other Schools'] = scraped_data[6]
             df.loc[index, 'Yrs Exp'] = scraped_data[7]
             df.loc[index, 'Int HS?'] = scraped_data[9]
-            df.loc[index, 'Mutuals'] = scraped_data[10]
-            df.loc[index, 'Grad Yr'] = scraped_data[11]
-            df.loc[index, 'Num Mutuals'] = scraped_data[12]
+            df.loc[index, 'Grad Yr'] = scraped_data[10]
+
+            if mutuals:
+                df.loc[index, 'Mutuals'] = scraped_data[10]
+                df.loc[index, 'Num Mutuals'] = scraped_data[12]
 
             if df.loc[index, 'Distance'] == '1st': df.loc[index, 'Distance'] = '1st!'
             elif df.loc[index, 'Distance'] == '2nd': df.loc[index, 'Distance'] = '2'
@@ -164,7 +174,10 @@ def main():
             # if scraped_data[4] in undergrads: undergrad_restrict_count += 1
             # if undergrads_by_country is not [] and scraped_data[4] in undergrads_by_country: undergrad_country_count += 1
 
-            df.to_excel('../spreadsheets/' + filename, index=False)
+            if '.csv' not in filename:
+                df.to_excel('../spreadsheets/' + filename, index=False)
+            else:
+                df.to_csv('../spreadsheets/' + filename, index=False)
 
     # save to database -- commented out because no database yet
     # reader = pd.read_excel(r'../spreadsheets/database.xlsx')

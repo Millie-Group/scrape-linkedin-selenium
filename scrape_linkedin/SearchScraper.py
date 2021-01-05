@@ -71,6 +71,8 @@ class SearchScraper(Scraper):
                 '.app-aware-link').get_attribute('href')
             #user_id = re.search(r'/in/(.*?)/', link).group(1)
             result['id'] = link
+            result['distance'] = conn.find_element_by_css_selector(
+                '.entity-result__badge').text[2:]
             results.append(result)
             print(result)
         return bool(next_btn), results
