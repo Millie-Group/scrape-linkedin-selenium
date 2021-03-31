@@ -16,7 +16,8 @@ class ProfileScraper(Scraper):
     Scraper for Personal LinkedIn Profiles. See inherited Scraper class for
     details about the constructor.
     """
-    MAIN_SELECTOR = '.core-rail'
+
+    MAIN_SELECTOR = '.scaffold-layout'
     ERROR_SELECTOR = '.profile-unavailable'
 
     def scrape_by_email(self, email):
@@ -103,11 +104,13 @@ class ProfileScraper(Scraper):
                 'mutual')
         except NoSuchElementException as e:
             print("NO MUTUAL CONNS")
-            return []
+            return [], 0
         with ConnectionScraper(scraperInstance=self) as cs:
             cs.driver.get(link.get_attribute('href'))
-            #cs.wait_for_el('.search-s-facet--facetNetwork form button')
+            # cs.wait_for_el('.search-s-facet--facetNetwork form button')
             users = cs.scrape_all_pages()
+            if type(users) is list:
+                return "; ".join(users), len(users)
             if type(users[0]) is dict:
                 names = [user['name'] for user in users]
                 return '; '.join(names), len(names)
