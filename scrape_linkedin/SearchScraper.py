@@ -5,10 +5,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import re
+import demoji
+import unidecode
 
 import time
 from utils import *
 
+demoji.download_codes()
 
 class SearchScraper(Scraper):
     """
@@ -21,7 +24,7 @@ class SearchScraper(Scraper):
         try:
             myElem = WebDriverWait(self.driver, self.timeout).until(AnyEC(
                 EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, '.search-results-page')),
+                    (By.CSS_SELECTOR, '.search-results-container')),
                 EC.presence_of_element_located(
                     (By.CSS_SELECTOR, '.profile-unavailable'))
             ))
@@ -35,9 +38,10 @@ class SearchScraper(Scraper):
 
     def next_page(self):
         next_btn = self.driver.find_element_by_css_selector('[aria-label="Next"]')
+        print(next_btn)
         next_btn.click()
         self.wait(EC.text_to_be_present_in_element(
-                (By.CSS_SELECTOR, '.search-results-page'), str(self.page_num + 1)
+                (By.CSS_SELECTOR, '.search-results-container'), str(self.page_num + 1)
         ))
         self.page_num += 1
 
@@ -67,6 +71,11 @@ class SearchScraper(Scraper):
             result = {}
             result['name'] = conn.find_element_by_css_selector(
                 '.entity-result__title-text').text.partition('\n')[0]
+            # Below added by Rishik to address emojis & accented names
+            if result['name'] == 'LinkedIn Member':
+                continue
+            result['name'] = demoji.replace(result['name'], "")
+            result['name'] = unidecode.unidecode(result['name'])
             link = conn.find_element_by_css_selector(
                 '.app-aware-link').get_attribute('href')
             #user_id = re.search(r'/in/(.*?)/', link).group(1)
