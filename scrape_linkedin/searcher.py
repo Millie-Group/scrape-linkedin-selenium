@@ -10,8 +10,14 @@ filename = input("Filename:\t")
 
 driver_options = HEADLESS_OPTIONS
 driver_type = Chrome
-scraper = SearchScraper(driver=driver_type, email=email, password=password, driver_options=driver_options)
-results = scraper.scrape(url='https://www.linkedin.com/search/results/people/?currentCompany=%5B%221441%22%5D&geoUrn=%5B%22102571732%22%5D&keywords=&network=%5B%22F%22%5D&origin=FACETED_SEARCH')
+# Below if you want a blank Chrome tab when running searcher.py
+# scraper = SearchScraper(driver=driver_type, email=email, password=password, driver_options=driver_options)
+
+# Below  if you want a Chrome tab displaying the LinkedIn search when running searcher.py
+scraper = SearchScraper(driver=driver_type, email=email, password=password, driver_options={})
+
+# Insert LinkedIn URL below
+results = scraper.scrape(url=)
 
 fields = ['LinkedIn URL', 'Full Name', 'Distance', 'Headline', 'First Name', 'Last Name', 'Location', 'Other Locations',
           'Undergrad', 'Other Schools', 'Yrs Exp', 'Int HS?', 'Grad Yr']
