@@ -16,7 +16,9 @@ def extract_name(data):
     The user's full name, first name, and last name
     """
 
+    print("DATA : " + str(data))
     full_name = data['personal_info']['name']
+    print("FULL NAME IS : " + str(full_name))
     if ' ' in full_name:
         first_name = full_name[:full_name.index(' ')]
         last_name = full_name[full_name.rindex(' ') + 1:]
@@ -139,12 +141,14 @@ def extract_work(data):
 
     return first_work, locs
 
-
 def make_scraper(cookie=None, email=None, password=None, headless=True):
     # sets up a Selenium instance using Chrome
     driver_options = HEADLESS_OPTIONS
     if headless == False:
-        driver_options = {}
+        # Below line allows for user to see web driver working during main.py function
+        # driver_options = {}
+        # Below line allows for blank chrome page during main.py function
+        driver_options = driver_options
     driver_type = Chrome
 
     # initializes a scraper object based on the cookie to scrape the URL's profile
@@ -201,9 +205,8 @@ def scrape_profile(url, scraper, international, mutuals=False):
         undergrad school(s), other school(s), years of experience since undergrad graduation, headline,
         international high school?, email, undergrad year of graduation (if found)
     """
-
     if mutuals:
-        data, connections, num_mutuals = scrape(url, scraper, mutuals=mutuals)    # scrapes the profile located at URL
+        data, connections, num_mutuals = scrape(url, scraper, mutuals)    # scrapes the profile located at URL
     else:
         data = scrape(url, scraper)
 
