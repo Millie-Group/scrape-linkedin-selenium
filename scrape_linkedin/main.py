@@ -34,7 +34,6 @@ def main():
     #     cookie = input("Cookie?\t")
     # else:
     #     sys.exit("Didn't enter a valid LinkedIn account! Must choose Jenna, Giuseppe, or Bot.")
-
     cookie = input("Cookie? (-1 to use email/password)\t")
     if cookie == '-1':
         email = input("Email?\t")
@@ -120,10 +119,11 @@ def main():
     undergrad_restrict_count = 0
     undergrad_country_count = 0
 
-    # TODO: location
-
     if cookie == '-1':
-        scraper = make_scraper(email=email, password=password)
+        # Added Rishik, Jan 20 ("headless=False")
+        scraper = make_scraper(email=email, password=password, headless=False)
+        # Original - uncomment the below to prevent a Chrome pop up (and comment out the above!)
+        # scraper = make_scraper(email=email, password=password)
     else:
         scraper = make_scraper(cookie=cookie)
 
@@ -131,7 +131,8 @@ def main():
         mutuals = True
         df['Mutuals'] = ''
         df['Num Mutuals'] = 0
-    else: mutuals = False
+    else:
+        mutuals = False
 
     # scrape profiles
     for index, row in df.iterrows():
@@ -143,7 +144,7 @@ def main():
             #elif url[-1] is not '/':
             #    url = url[:url.rindex('-')]
             print(url, str(index))
-            scraped_data = scrape_profile(url, scraper, int_schools, mutuals=mutuals)
+            scraped_data = scrape_profile(url, scraper, int_schools, mutuals)
             print(scraped_data)
 
             df.loc[index, 'Full Name'] = scraped_data[0]
@@ -159,7 +160,8 @@ def main():
             df.loc[index, 'Grad Yr'] = scraped_data[10]
 
             if mutuals:
-                df.loc[index, 'Mutuals'] = scraped_data[10]
+                if scraped_data[11]:
+                    df.loc[index, 'Mutuals'] = scraped_data[11]
                 df.loc[index, 'Num Mutuals'] = scraped_data[12]
 
             if df.loc[index, 'Distance'] == '1st': df.loc[index, 'Distance'] = '1st!'
