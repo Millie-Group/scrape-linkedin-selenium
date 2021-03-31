@@ -22,7 +22,8 @@ class Scraper(object):
         - timeout {float}: time to wait for page to load first batch of async content
     """
 
-    def __init__(self, email=None, password=None, cookie=None, scraperInstance=None, driver=selenium.webdriver.Chrome, driver_options={}, scroll_pause=0.1, scroll_increment=300, timeout=10):
+    # If you're running Windows, specify binary file within driver (i.e. append "chromedriver.exe" in path); if running Mac, no need to specify file, just path to directory
+    def __init__(self, email=None, password=None, cookie=None, scraperInstance=None, driver=selenium.webdriver.Chrome(r"C:/Users/rishi/Downloads/chromedriver_win32/chromedriver.exe"), driver_options={}, scroll_pause=0.1, scroll_increment=300, timeout=60):
         if type(self) is Scraper:
             raise Exception(
                 'Scraper is an abstract class and cannot be instantiated directly')
